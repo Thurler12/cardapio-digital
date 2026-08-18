@@ -1,0 +1,152 @@
+
+/* ==========================================================================
+   1. VARIÁVEIS & RESET (Guia de Estilo + Base para Dark Mode)
+   ========================================================================== */
+:root {
+  /* Cores Padrão (Tema Claro) */
+  --bg-primary: #f8f9fa;
+  --bg-card: #ffffff;
+  --text-main: #212529;
+  --text-muted: #6c757d;
+  --primary-color: #2b2d42;
+  --accent-color: #007bff;
+  --border-color: #e9ecef;
+
+  /* Regra do Sistema de 8 Pontos (8pt Grid) */
+  --space-8: 0.5rem;   /* 8px */
+  --space-16: 1rem;    /* 16px */
+  --space-24: 1.5rem;  /* 24px */
+  --space-32: 2rem;    /* 32px */
+
+  /* Tipografia Relativa (rem) */
+  --font-sm: 0.875rem; /* 14px */
+  --font-md: 1rem;     /* 16px */
+  --font-lg: 1.25rem;  /* 20px */
+  --font-xl: 1.5rem;   /* 24px */
+  
+  --radius: 12px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Reset Básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  line-height: 1.5;
+  padding-bottom: var(--space-32);
+}
+
+/* Layout Container */
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-left: var(--space-16);
+  padding-right: var(--space-16);
+}
+
+/* ==========================================================================
+   2. CABEÇALHO (HEADER)
+   ========================================================================== */
+.app-header {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+  margin-bottom: var(--space-24);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-title {
+  font-size: var(--font-xl);
+  color: var(--primary-color);
+}
+
+.btn-theme {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  font-size: var(--font-lg);
+  padding: var(--space-8);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   3. SEÇÃO DE PRODUTOS & CARDS (MOBILE-FIRST)
+   ========================================================================== */
+.section-title {
+  font-size: var(--font-lg);
+  margin-bottom: var(--space-16);
+}
+
+/* Uso do GAP para afastar cards */
+.products-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16); /* 16px de afastamento */
+}
+
+.product-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: var(--space-16); /* Padding de 16px */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);      /* 8px entre os elementos de texto */
+}
+
+.product-name {
+  font-size: var(--font-lg);
+}
+
+.product-description {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+.product-price {
+  font-size: var(--font-md);
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-top: var(--space-8);
+}
+
+/* ==========================================================================
+   4. RESPONSIVIDADE (DESKTOP / TABLET)
+   ========================================================================== */
+@media (min-width: 600px) {
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-24); /* 24px em telas maiores */
+  }
+}
