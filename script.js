@@ -80,27 +80,26 @@ function aplicarPermissoesUI(role, nome) {
   });
 }
 
-// Login
-// Login
+// Login com diagnóstico de erros
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log("Tentando fazer login...");
 
     const userInput = document.getElementById('admin-user');
     const passInput = document.getElementById('admin-pass');
 
-    // Só tenta ler os valores se os elementos existirem na tela
-    if (!userInput || !passInput) return;
-
-    const email = userInput.value;
-    const password = passInput.value;
+    if (!userInput || !passInput) {
+      alert("Erro: Campos do formulário não encontrados no HTML!");
+      return;
+    }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      loginForm.reset();
+      const userCredential = await signInWithEmailAndPassword(auth, userInput.value, passInput.value);
+      console.log("Login realizado com sucesso!", userCredential.user);
     } catch (error) {
-      console.error("Erro no login:", error);
-      alert('E-mail ou senha incorretos!');
+      console.error("Erro no Firebase Auth:", error);
+      alert("Erro ao fazer login: " + error.code + " - " + error.message);
     }
   });
 }
