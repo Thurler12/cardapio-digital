@@ -33,8 +33,18 @@ const btnLogout = document.getElementById('btn-logout');
 // ==========================================================================
 // 1. GERENCIAMENTO DE SESSÃO E ROLES
 // ==========================================================================
+// Redirecionamento e verificação de autenticação
 onAuthStateChanged(auth, async (user) => {
+  const isLoginPage = window.location.pathname.includes('login.html');
+  const isAdminPage = window.location.pathname.includes('admin.html');
+
   if (user) {
+    // Se logou estando na página de login, redireciona para o admin
+    if (isLoginPage) {
+      window.location.href = 'admin.html';
+      return;
+    }
+
     try {
       const userDocRef = doc(db, "usuarios", user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -49,17 +59,52 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (err) {
       console.error("Erro ao carregar permissões:", err);
-      currentUserRole = 'gerente';
     }
-
-    if (loginContainer) loginContainer.classList.add('hidden');
-    if (adminPanel) adminPanel.classList.remove('hidden');
   } else {
-    currentUserRole = null;
-    if (loginContainer) loginContainer.classList.remove('hidden');
-    if (adminPanel) adminPanel.classList.add('hidden');
+    // Se não está logado e tenta acessar o admin, envia de volta ao login
+    if (isAdminPage) {
+      window.location.href = 'login.html';
+    }
   }
 });
+
+// Função de Login
+async function realizarLogin(e) {
+  if (e) e.preventDefault(); // Impede o envio padrão do formulário e o refresh!
+
+  const userInput = document.getElementById('admin-user');
+  const passInput = document.getElementById('admin-pass');
+
+  if (!userInput || !passInput) return;
+
+  const email = userInput.value.trim();
+  const password = passInput.value.trim();
+
+  if (!email || !password) {
+    alert("Por favor, preencha o e-mail e a senha.");
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    // Redireciona para a página administrativa após autenticar
+    window.location.href = 'admin.html';
+  } catch (error) {
+    console.error("Erro no Firebase Auth:", error);
+    const loginError = document.getElementById('login-error');
+    if (loginError) {
+      loginError.classList.remove('hidden');
+    } else {
+      alert("Erro ao fazer login: " + error.message);
+    }
+  }
+}
+
+// Vincula ao formulário (escuta o botão Submit e a tecla Enter)
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+  loginForm.addEventListener('submit', realizarLogin);
+}
 
 function aplicarPermissoesUI(role, nome) {
   const userInfoTag = document.getElementById('user-info-tag');
