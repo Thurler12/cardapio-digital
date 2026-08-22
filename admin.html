@@ -6,13 +6,10 @@
   <title>Painel Administrativo - Sorveteria</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Garante que elementos escondidos fiquem ocultos */
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
-<body class="login-page">
+<body>
 
   <!-- CABEÇALHO -->
   <header class="app-header">
@@ -22,26 +19,7 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="container">
 
-    <!-- 1. TELA DE LOGIN -->
-    <!-- TELA DE LOGIN -->
-    <div id="login-container">
-        <h2>Área Restrita</h2>
-        <p style="margin-bottom: 20px; color: var(--text-muted);">Faça login para gerenciar o cardápio</p>
-        
-        <div class="form-group">
-            <label for="admin-user">E-mail</label>
-            <input type="email" id="admin-user" placeholder="seuemail@exemplo.com">
-        </div>
-
-        <div class="form-group">
-            <label for="admin-pass">Senha</label>
-            <input type="password" id="admin-pass" placeholder="••••••••">
-        </div>
-
-        <button type="button" id="btn-login-action" class="btn-primary">Entrar no Painel</button>
-    </div> 
-
-    <!-- 2. PAINEL ADMIN (Inicia oculto com 'hidden' e só abre após o Login) -->
+    <!-- PAINEL ADMIN (Inicia oculto com 'hidden' e só abre após validar sessão) -->
     <div id="admin-panel" class="hidden">
       
       <!-- Topo do Painel: Informações do Usuário e Logout -->
@@ -93,16 +71,13 @@
       <!-- Lista de Sabores Cadastrados -->
       <section class="admin-section">
         <h2 class="section-title">Sabores no Cardápio</h2>
-        <div id="admin-product-list">
-          <!-- Os produtos renderizam aqui via JavaScript -->
-        </div>
+        <div id="admin-product-list"></div>
       </section>
 
     </div>
 
   </main>
 
-  <!-- Script configurado como módulo ES6 -->
- <script type="module" src="script.js?v=4"></script>
+  <script type="module" src="script.js?v=12"></script>
 </body>
 </html>

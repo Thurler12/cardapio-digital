@@ -26,20 +26,18 @@ let globalProducts = [];
 const productsRef = collection(db, "produtos");
 
 // Elementos do HTML
-const loginContainer = document.getElementById('login-container');
 const adminPanel = document.getElementById('admin-panel');
 const btnLogout = document.getElementById('btn-logout');
 
 // ==========================================================================
 // 1. GERENCIAMENTO DE SESSÃO E ROLES
 // ==========================================================================
-// Redirecionamento e verificação de autenticação
 onAuthStateChanged(auth, async (user) => {
-  const isLoginPage = window.location.pathname.includes('login.html');
-  const isAdminPage = window.location.pathname.includes('admin.html');
+  const path = window.location.pathname;
+  const isLoginPage = path.includes('login.html');
+  const isAdminPage = path.includes('admin.html');
 
   if (user) {
-    // Se logou estando na página de login, redireciona para o admin
     if (isLoginPage) {
       window.location.href = 'admin.html';
       return;
@@ -60,17 +58,21 @@ onAuthStateChanged(auth, async (user) => {
     } catch (err) {
       console.error("Erro ao carregar permissões:", err);
     }
+
+    if (adminPanel) adminPanel.classList.remove('hidden');
+
   } else {
-    // Se não está logado e tenta acessar o admin, envia de volta ao login
     if (isAdminPage) {
       window.location.href = 'login.html';
     }
   }
 });
 
-// Função de Login
+// ==========================================================================
+// 2. FUNÇÃO DE LOGIN ÚNICA E UNIFICADA
+// ==========================================================================
 async function realizarLogin(e) {
-  if (e) e.preventDefault(); // Impede o envio padrão do formulário e o refresh!
+  if (e) e.preventDefault(); // MÁXIMA IMPORTÂNCIA: Bloqueia o refresh da página!
 
   const userInput = document.getElementById('admin-user');
   const passInput = document.getElementById('admin-pass');
@@ -87,7 +89,6 @@ async function realizarLogin(e) {
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    // Redireciona para a página administrativa após autenticar
     window.location.href = 'admin.html';
   } catch (error) {
     console.error("Erro no Firebase Auth:", error);
@@ -100,10 +101,17 @@ async function realizarLogin(e) {
   }
 }
 
-// Vincula ao formulário (escuta o botão Submit e a tecla Enter)
+// Vincula o evento ao formulário no login.html
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
   loginForm.addEventListener('submit', realizarLogin);
+}
+
+// Logout
+if (btnLogout) {
+  btnLogout.addEventListener('click', () => {
+    signOut(auth);
+  });
 }
 
 function aplicarPermissoesUI(role, nome) {
@@ -122,53 +130,6 @@ function aplicarPermissoesUI(role, nome) {
 
   document.querySelectorAll('.perm-gerente').forEach(el => {
     el.style.display = (role === 'suporte' || role === 'dona' || role === 'gerente') ? 'block' : 'none';
-  });
-}
-
-//================================================================
-// 2. FUNÇÃO DE LOGIN DIRETA
-// ==========================================================================
-async function realizarLogin() {
-  const userInput = document.getElementById('admin-user');
-  const passInput = document.getElementById('admin-pass');
-
-  // Se os campos não existem (ex: estamos no index.html), encerra sem dar erro
-  if (!userInput || !passInput) return;
-
-  const email = userInput.value.trim();
-  const password = passInput.value.trim();
-
-  if (!email || !password) {
-    alert("Por favor, preencha o e-mail e a senha.");
-    return;
-  }
-
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    alert("Login realizado com sucesso!");
-  } catch (error) {
-    console.error("Erro no Firebase Auth:", error);
-    alert("Erro ao fazer login: " + error.code + "\n" + error.message);
-  }
-}
-
-// Vincula os eventos do botão e do campo de senha
-const btnLogin = document.getElementById('btn-login-action');
-if (btnLogin) {
-  btnLogin.addEventListener('click', realizarLogin);
-}
-
-const passInputLogin = document.getElementById('admin-pass');
-if (passInputLogin) {
-  passInputLogin.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') realizarLogin();
-  });
-}
-
-// Logout
-if (btnLogout) {
-  btnLogout.addEventListener('click', () => {
-    signOut(auth);
   });
 }
 
@@ -218,20 +179,22 @@ function renderPublicProducts(products) {
   });
 }
 
-categoryButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    categoryButtons.forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
+if (categoryButtons) {
+  categoryButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      categoryButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
 
-    const category = button.dataset.category;
-    if (category === 'Todos') {
-      renderPublicProducts(globalProducts);
-    } else {
-      const filtered = globalProducts.filter(p => p.category === category);
-      renderPublicProducts(filtered);
-    }
+      const category = button.dataset.category;
+      if (category === 'Todos') {
+        renderPublicProducts(globalProducts);
+      } else {
+        const filtered = globalProducts.filter(p => p.category === category);
+        renderPublicProducts(filtered);
+      }
+    });
   });
-});
+}
 
 // ==========================================================================
 // 5. PAINEL ADMIN (ADMIN.HTML)

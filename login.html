@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Área Administrativa</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body class="login-page">
 
@@ -25,7 +28,6 @@
         <p class="login-subtitle">Acesse para gerenciar os sabores do cardápio</p>
       </div>
 
-      <!-- FORMULÁRIO COM OS IDS CORRETOS -->
       <form id="login-form" class="login-form">
         <div class="form-group">
           <label for="admin-user">E-mail</label>
@@ -52,13 +54,12 @@
         <button type="submit" id="btn-login-action" class="btn-primary">Entrar no Painel</button>
       </form>
 
-      <!-- MENSAGEM DE ERRO -->
-      <div id="login-error" class="login-error hidden">
+      <div id="login-error" class="login-error hidden" style="color: red; margin-top: 10px;">
         ⚠️ E-mail ou senha incorretos!
       </div>
     </div>
   </main>
 
-  <script type="module" src="script.js?v=11"></script>
+  <script type="module" src="script.js?v=12"></script>
 </body>
 </html>
