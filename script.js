@@ -142,8 +142,21 @@ onSnapshot(productsRef, (snapshot) => {
     ...docSnap.data()
   }));
 
-  renderPublicProducts(globalProducts);
+  // Identifica qual botão de categoria está ativo no momento (padrão é 'Todos')
+  const activeBtn = document.querySelector('.filter-btn.active');
+  const activeCategory = activeBtn ? activeBtn.dataset.category : 'Todos';
+
+  if (activeCategory === 'Todos') {
+    renderPublicProducts(globalProducts);
+  } else {
+    const filtered = globalProducts.filter(p => p.category === activeCategory);
+    renderPublicProducts(filtered);
+  }
+
+  // Atualiza também a lista do painel admin
   renderAdminProducts(globalProducts);
+}, (error) => {
+  console.error("Erro ao escutar alterações no Firestore:", error);
 });
 
 // ==========================================================================
