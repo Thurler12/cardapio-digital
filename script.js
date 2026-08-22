@@ -290,7 +290,7 @@ async function deleteProduct(id) {
   document.querySelectorAll('.btn-delete-action').forEach(btn => {
     btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
   });
-}
+
 
 function prepareEditProduct(id) {
   const product = globalProducts.find(p => p.id === id);
