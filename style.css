@@ -352,7 +352,7 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 /* ==========================================================================
    MELHORIAS NA TELA DE LOGIN
