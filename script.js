@@ -1,10 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-  getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot 
+  getFirestore, doc, getDoc, collection, addDoc, deleteDoc, updateDoc, onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Credenciais do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCmMvpuCwr0xIPMtqxYeFtoqkulPzGy6Ok",
   authDomain: "projeto-cardapio-thurler12.firebaseapp.com",
@@ -15,23 +14,18 @@ const firebaseConfig = {
   measurementId: "G-RYC0VQ2ZL2"
 };
 
-// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Variáveis Globais
 let currentUserRole = null;
 let globalProducts = [];
 const productsRef = collection(db, "produtos");
 
-// Elementos do HTML
 const adminPanel = document.getElementById('admin-panel');
 const btnLogout = document.getElementById('btn-logout');
 
-// ==========================================================================
-// 1. GERENCIAMENTO DE SESSÃO E ROLES
-// ==========================================================================
+// 1. SESSÃO E AUTENTICAÇÃO
 onAuthStateChanged(auth, async (user) => {
   const path = window.location.pathname;
   const isLoginPage = path.includes('login.html');
@@ -56,7 +50,7 @@ onAuthStateChanged(auth, async (user) => {
         aplicarPermissoesUI('gerente', 'Usuário');
       }
     } catch (err) {
-      console.error("Erro ao carregar permissões:", err);
+      console.error("Erro permissões:", err);
     }
 
     if (adminPanel) adminPanel.classList.remove('hidden');
@@ -68,11 +62,9 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ==========================================================================
-// 2. FUNÇÃO DE LOGIN ÚNICA E UNIFICADA
-// ==========================================================================
+// 2. LOGIN / LOGOUT
 async function realizarLogin(e) {
-  if (e) e.preventDefault(); // MÁXIMA IMPORTÂNCIA: Bloqueia o refresh da página!
+  if (e) e.preventDefault();
 
   const userInput = document.getElementById('admin-user');
   const passInput = document.getElementById('admin-pass');
@@ -82,103 +74,66 @@ async function realizarLogin(e) {
   const email = userInput.value.trim();
   const password = passInput.value.trim();
 
-  if (!email || !password) {
-    alert("Por favor, preencha o e-mail e a senha.");
-    return;
-  }
-
   try {
     await signInWithEmailAndPassword(auth, email, password);
     window.location.href = 'admin.html';
   } catch (error) {
-    console.error("Erro no Firebase Auth:", error);
+    console.error("Erro Auth:", error);
     const loginError = document.getElementById('login-error');
-    if (loginError) {
-      loginError.classList.remove('hidden');
-    } else {
-      alert("Erro ao fazer login: " + error.message);
-    }
+    if (loginError) loginError.classList.remove('hidden');
   }
 }
 
-// Vincula o evento ao formulário no login.html
 const loginForm = document.getElementById('login-form');
-if (loginForm) {
-  loginForm.addEventListener('submit', realizarLogin);
-}
+if (loginForm) loginForm.addEventListener('submit', realizarLogin);
 
-// Logout
 if (btnLogout) {
-  btnLogout.addEventListener('click', () => {
-    signOut(auth);
-  });
+  btnLogout.addEventListener('click', () => signOut(auth));
 }
 
 function aplicarPermissoesUI(role, nome) {
   const userInfoTag = document.getElementById('user-info-tag');
-  if (userInfoTag) {
-    userInfoTag.textContent = `${nome} (${role.toUpperCase()})`;
-  }
-
-  document.querySelectorAll('.perm-suporte').forEach(el => {
-    el.style.display = (role === 'suporte') ? 'block' : 'none';
-  });
-
-  document.querySelectorAll('.perm-dona').forEach(el => {
-    el.style.display = (role === 'suporte' || role === 'dona') ? 'block' : 'none';
-  });
-
-  document.querySelectorAll('.perm-gerente').forEach(el => {
-    el.style.display = (role === 'suporte' || role === 'dona' || role === 'gerente') ? 'block' : 'none';
-  });
+  if (userInfoTag) userInfoTag.textContent = `${nome} (${role ? role.toUpperCase() : 'USER'})`;
 }
 
-// ==========================================================================
-// 3. SINCRONIZAÇÃO EM TEMPO REAL
-// ==========================================================================
+// 3. BANCO DE DADOS EM TEMPO REAL
 onSnapshot(productsRef, (snapshot) => {
   globalProducts = snapshot.docs.map(docSnap => ({
     id: docSnap.id,
+    available: true,
     ...docSnap.data()
   }));
 
-  // Identifica qual botão de categoria está ativo no momento (padrão é 'Todos')
   const activeBtn = document.querySelector('.filter-btn.active');
   const activeCategory = activeBtn ? activeBtn.dataset.category : 'Todos';
 
-  if (activeCategory === 'Todos') {
-    renderPublicProducts(globalProducts);
-  } else {
-    const filtered = globalProducts.filter(p => p.category === activeCategory);
-    renderPublicProducts(filtered);
-  }
-
-  // Atualiza também a lista do painel admin
+  renderPublicProducts(globalProducts, activeCategory);
   renderAdminProducts(globalProducts);
-}, (error) => {
-  console.error("Erro ao escutar alterações no Firestore:", error);
+}, (err) => {
+  console.error("Erro Firestore:", err);
 });
 
-// ==========================================================================
-// 4. EXIBIÇÃO NO CARDÁPIO PÚBLICO
-// ==========================================================================
-const productContainer = document.getElementById('product-list');
-const categoryButtons = document.querySelectorAll('.filter-btn');
-
-function renderPublicProducts(products) {
+// 4. RENDEREIZAÇÃO VITRINE PÚBLICA
+function renderPublicProducts(products, category = 'Todos') {
+  const productContainer = document.getElementById('product-list');
   if (!productContainer) return;
 
   productContainer.innerHTML = '';
 
-  if (products.length === 0) {
-    productContainer.innerHTML = '<p class="empty-msg">Nenhum sabor cadastrado no momento.</p>';
+  let visibleProducts = products.filter(p => p.available !== false);
+
+  if (category !== 'Todos') {
+    visibleProducts = visibleProducts.filter(p => p.category === category);
+  }
+
+  if (visibleProducts.length === 0) {
+    productContainer.innerHTML = '<p class="empty-msg">Nenhum sabor disponível no momento.</p>';
     return;
   }
 
-  products.forEach(product => {
+  visibleProducts.forEach(product => {
     const card = document.createElement('div');
     card.className = 'product-card';
-
     card.innerHTML = `
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <div class="product-info">
@@ -187,56 +142,37 @@ function renderPublicProducts(products) {
         <p class="product-desc">${product.description}</p>
       </div>
     `;
-
     productContainer.appendChild(card);
   });
 }
 
-if (categoryButtons) {
+const categoryButtons = document.querySelectorAll('.filter-btn');
+if (categoryButtons.length > 0) {
   categoryButtons.forEach(button => {
     button.addEventListener('click', () => {
       categoryButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
-
-      const category = button.dataset.category;
-      if (category === 'Todos') {
-        renderPublicProducts(globalProducts);
-      } else {
-        const filtered = globalProducts.filter(p => p.category === category);
-        renderPublicProducts(filtered);
-      }
+      renderPublicProducts(globalProducts, button.dataset.category);
     });
   });
 }
 
-// ==========================================================================
-// 5. PAINEL ADMIN (ADMIN.HTML)
-// ==========================================================================
-const productForm = document.getElementById('product-form');
-const adminProductList = document.getElementById('admin-product-list');
-const editIdInput = document.getElementById('edit-id');
-const formTitle = document.getElementById('form-title');
-const btnSubmit = document.getElementById('btn-submit');
-const btnCancelEdit = document.getElementById('btn-cancel-edit');
-const imgInput = document.getElementById('prod-img');
-
+// 5. RENDERIZAÇÃO PAINEL ADMIN
 function renderAdminProducts(products) {
+  const adminProductList = document.getElementById('admin-product-list');
   if (!adminProductList) return;
 
   adminProductList.innerHTML = '';
 
   if (products.length === 0) {
-    adminProductList.innerHTML = '<p style="color: var(--text-muted);">Nenhum sabor cadastrado no momento.</p>';
+    adminProductList.innerHTML = '<p style="color: var(--text-muted);">Nenhum sabor cadastrado.</p>';
     return;
   }
 
   products.forEach(product => {
     const itemCard = document.createElement('div');
-    itemCard.className = 'admin-item-card';
-
-    const deleteButtonHtml = (currentUserRole === 'dona' || currentUserRole === 'suporte') 
-      ? `<button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>` 
-      : '';
+    itemCard.className = `admin-item-card ${product.available === false ? 'disabled-item' : ''}`;
+    const isChecked = product.available !== false ? 'checked' : '';
 
     itemCard.innerHTML = `
       <div class="admin-item-info">
@@ -246,13 +182,29 @@ function renderAdminProducts(products) {
           <p style="font-size: var(--font-sm); color: var(--text-muted);">${product.description}</p>
         </div>
       </div>
-      <div style="display: flex; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <label class="switch-container" title="Ativar/Desativar">
+          <input type="checkbox" class="toggle-status" data-id="${product.id}" ${isChecked}>
+          <span class="slider round"></span>
+        </label>
         <button class="filter-btn btn-edit-action" data-id="${product.id}">✏️ Editar</button>
-        ${deleteButtonHtml}
+        <button class="btn-delete-action" data-id="${product.id}" title="Excluir Sabor">🗑️</button>
       </div>
     `;
-
     adminProductList.appendChild(itemCard);
+  });
+
+  document.querySelectorAll('.toggle-status').forEach(toggle => {
+    toggle.addEventListener('change', async (e) => {
+      const prodId = e.target.dataset.id;
+      const isAvailable = e.target.checked;
+      try {
+        await updateDoc(doc(db, "produtos", prodId), { available: isAvailable });
+      } catch (err) {
+        console.error("Erro status:", err);
+        e.target.checked = !isAvailable;
+      }
+    });
   });
 
   document.querySelectorAll('.btn-edit-action').forEach(btn => {
@@ -264,6 +216,14 @@ function renderAdminProducts(products) {
   });
 }
 
+// 6. EDITAR, RESETAR E DELETAR
+const productForm = document.getElementById('product-form');
+const editIdInput = document.getElementById('edit-id');
+const formTitle = document.getElementById('form-title');
+const btnSubmit = document.getElementById('btn-submit');
+const btnCancelEdit = document.getElementById('btn-cancel-edit');
+const imgInput = document.getElementById('prod-img');
+
 function prepareEditProduct(id) {
   const product = globalProducts.find(p => p.id === id);
   if (!product) return;
@@ -272,7 +232,6 @@ function prepareEditProduct(id) {
   document.getElementById('prod-category').value = product.category;
   document.getElementById('prod-desc').value = product.description;
   if (editIdInput) editIdInput.value = product.id;
-
   if (imgInput) imgInput.removeAttribute('required');
 
   if (formTitle) formTitle.textContent = 'Editar Sabor';
@@ -282,9 +241,7 @@ function prepareEditProduct(id) {
   if (productForm) productForm.scrollIntoView({ behavior: 'smooth' });
 }
 
-if (btnCancelEdit) {
-  btnCancelEdit.addEventListener('click', resetAdminForm);
-}
+if (btnCancelEdit) btnCancelEdit.addEventListener('click', resetAdminForm);
 
 function resetAdminForm() {
   if (!productForm) return;
@@ -297,17 +254,14 @@ function resetAdminForm() {
 }
 
 async function deleteProduct(id) {
-  if (currentUserRole !== 'dona' && currentUserRole !== 'suporte') {
-    alert("Apenas a Dona ou o Suporte têm permissão para excluir produtos!");
-    return;
-  }
+  const product = globalProducts.find(p => p.id === id);
+  const productName = product ? product.name : 'este item';
 
-  if (confirm("Tem certeza que deseja excluir este sabor?")) {
+  if (confirm(`Deseja apagar "${productName}" permanentemente?`)) {
     try {
       await deleteDoc(doc(db, "produtos", id));
     } catch (error) {
-      console.error("Erro ao excluir:", error);
-      alert("Erro ao excluir sabor do banco de dados.");
+      console.error("Erro ao apagar:", error);
     }
   }
 }
@@ -328,21 +282,18 @@ if (productForm) {
           const docRef = doc(db, "produtos", docIdToEdit);
           const updateData = { name, category, description };
           if (imageBase64) updateData.image = imageBase64;
-
           await updateDoc(docRef, updateData);
         } else {
           await addDoc(productsRef, {
-            name,
-            category,
-            description,
+            name, category, description,
             image: imageBase64 || '',
+            available: true,
             createdAt: new Date()
           });
         }
         resetAdminForm();
       } catch (error) {
-        console.error("Erro ao salvar:", error);
-        alert("Erro ao salvar sabor no banco de dados.");
+        console.error("Erro salvar:", error);
       }
     };
 
