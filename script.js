@@ -20,19 +20,19 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// VARIÁVEIS GLOBAIS QUE FALTAVAM
+// Variáveis Globais
 let currentUserRole = null;
 let globalProducts = [];
 const productsRef = collection(db, "produtos");
 
+// Elementos do HTML
+const loginContainer = document.getElementById('login-container');
+const adminPanel = document.getElementById('admin-panel');
+const btnLogout = document.getElementById('btn-logout');
+
 // ==========================================================================
 // 1. GERENCIAMENTO DE SESSÃO E ROLES
 // ==========================================================================
-const loginContainer = document.getElementById('login-container');
-const adminPanel = document.getElementById('admin-panel');
-const loginForm = document.getElementById('login-form');
-const btnLogout = document.getElementById('btn-logout');
-
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
@@ -80,27 +80,46 @@ function aplicarPermissoesUI(role, nome) {
   });
 }
 
-// Login com diagnóstico de erros
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    console.log("Tentando fazer login...");
+// ==========================================================================
+// 2. FUNÇÃO DE LOGIN DIRETA
+// ==========================================================================
+async function realizarLogin() {
+  const userInput = document.getElementById('admin-user');
+  const passInput = document.getElementById('admin-pass');
 
-    const userInput = document.getElementById('admin-user');
-    const passInput = document.getElementById('admin-pass');
+  if (!userInput || !passInput) {
+    alert("Erro: Campos de login não encontrados no HTML!");
+    return;
+  }
 
-    if (!userInput || !passInput) {
-      alert("Erro: Campos do formulário não encontrados no HTML!");
-      return;
-    }
+  const email = userInput.value.trim();
+  const password = passInput.value.trim();
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, userInput.value, passInput.value);
-      console.log("Login realizado com sucesso!", userCredential.user);
-    } catch (error) {
-      console.error("Erro no Firebase Auth:", error);
-      alert("Erro ao fazer login: " + error.code + " - " + error.message);
-    }
+  if (!email || !password) {
+    alert("Por favor, preencha o e-mail e a senha.");
+    return;
+  }
+
+  try {
+    alert("Enviando dados para o Firebase...");
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    alert("Login realizado com sucesso!");
+  } catch (error) {
+    console.error("Erro no Firebase Auth:", error);
+    alert("Erro ao fazer login: " + error.code + "\n" + error.message);
+  }
+}
+
+// Vincula os eventos do botão e do campo de senha
+const btnLogin = document.getElementById('btn-login-action');
+if (btnLogin) {
+  btnLogin.addEventListener('click', realizarLogin);
+}
+
+const passInputLogin = document.getElementById('admin-pass');
+if (passInputLogin) {
+  passInputLogin.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') realizarLogin();
   });
 }
 
@@ -112,7 +131,7 @@ if (btnLogout) {
 }
 
 // ==========================================================================
-// 2. SINCRONIZAÇÃO EM TEMPO REAL
+// 3. SINCRONIZAÇÃO EM TEMPO REAL
 // ==========================================================================
 onSnapshot(productsRef, (snapshot) => {
   globalProducts = snapshot.docs.map(docSnap => ({
@@ -125,7 +144,7 @@ onSnapshot(productsRef, (snapshot) => {
 });
 
 // ==========================================================================
-// 3. EXIBIÇÃO NO CARDÁPIO PÚBLICO
+// 4. EXIBIÇÃO NO CARDÁPIO PÚBLICO
 // ==========================================================================
 const productContainer = document.getElementById('product-list');
 const categoryButtons = document.querySelectorAll('.filter-btn');
@@ -173,7 +192,7 @@ categoryButtons.forEach(button => {
 });
 
 // ==========================================================================
-// 4. PAINEL ADMIN (ADMIN.HTML)
+// 5. PAINEL ADMIN (ADMIN.HTML)
 // ==========================================================================
 const productForm = document.getElementById('product-form');
 const adminProductList = document.getElementById('admin-product-list');
@@ -234,7 +253,7 @@ function prepareEditProduct(id) {
   document.getElementById('prod-name').value = product.name;
   document.getElementById('prod-category').value = product.category;
   document.getElementById('prod-desc').value = product.description;
-  editIdInput.value = product.id;
+  if (editIdInput) editIdInput.value = product.id;
 
   if (imgInput) imgInput.removeAttribute('required');
 
@@ -242,7 +261,7 @@ function prepareEditProduct(id) {
   if (btnSubmit) btnSubmit.textContent = 'Salvar Alterações';
   if (btnCancelEdit) btnCancelEdit.classList.remove('hidden');
 
-  productForm.scrollIntoView({ behavior: 'smooth' });
+  if (productForm) productForm.scrollIntoView({ behavior: 'smooth' });
 }
 
 if (btnCancelEdit) {
@@ -252,7 +271,7 @@ if (btnCancelEdit) {
 function resetAdminForm() {
   if (!productForm) return;
   productForm.reset();
-  editIdInput.value = '';
+  if (editIdInput) editIdInput.value = '';
   if (imgInput) imgInput.setAttribute('required', 'true');
   if (formTitle) formTitle.textContent = 'Cadastrar Novo Sabor';
   if (btnSubmit) btnSubmit.textContent = '+ Adicionar Sabor';
@@ -282,7 +301,7 @@ if (productForm) {
     const name = document.getElementById('prod-name').value;
     const category = document.getElementById('prod-category').value;
     const description = document.getElementById('prod-desc').value;
-    const docIdToEdit = editIdInput.value;
+    const docIdToEdit = editIdInput ? editIdInput.value : '';
     const file = imgInput ? imgInput.files[0] : null;
 
     const saveToFirestore = async (imageBase64) => {
