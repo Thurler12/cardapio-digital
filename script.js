@@ -1,24 +1,8 @@
-// ==========================================================================
-// CONFIGURAÇÃO DO FIREBASE E SERVIÇOS
-// ==========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  doc, 
-  getDoc,
-  updateDoc, 
-  deleteDoc 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// Suas credenciais do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCmMvpuCwr0xIPMtqxYeFtoqkulPzGy6Ok",
   authDomain: "projeto-cardapio-thurler12.firebaseapp.com",
@@ -29,13 +13,10 @@ const firebaseConfig = {
   measurementId: "G-RYC0VQ2ZL2"
 };
 
+// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
-const productsRef = collection(db, "produtos");
-
-let globalProducts = [];
-let currentUserRole = null;
+const db = getFirestore(app);
 
 // ==========================================================================
 // 1. GERENCIAMENTO DE SESSÃO E ROLES
