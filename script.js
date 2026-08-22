@@ -1,8 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+  getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Suas credenciais do Firebase
+// Credenciais do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCmMvpuCwr0xIPMtqxYeFtoqkulPzGy6Ok",
   authDomain: "projeto-cardapio-thurler12.firebaseapp.com",
@@ -18,6 +20,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// VARIÁVEIS GLOBAIS QUE FALTAVAM
+let currentUserRole = null;
+let globalProducts = [];
+const productsRef = collection(db, "produtos");
+
 // ==========================================================================
 // 1. GERENCIAMENTO DE SESSÃO E ROLES
 // ==========================================================================
@@ -28,7 +35,6 @@ const btnLogout = document.getElementById('btn-logout');
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    // Buscar perfil do usuário no Firestore
     try {
       const userDocRef = doc(db, "usuarios", user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -38,7 +44,6 @@ onAuthStateChanged(auth, async (user) => {
         currentUserRole = userData.role;
         aplicarPermissoesUI(currentUserRole, userData.nome);
       } else {
-        // Papel padrão caso não exista documento
         currentUserRole = 'gerente';
         aplicarPermissoesUI('gerente', 'Usuário');
       }
@@ -56,14 +61,12 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Exibe/Oculta elementos com base nas classes de permissão
 function aplicarPermissoesUI(role, nome) {
   const userInfoTag = document.getElementById('user-info-tag');
   if (userInfoTag) {
     userInfoTag.textContent = `${nome} (${role.toUpperCase()})`;
   }
 
-  // Oculta/Exibe botões ou áreas com classes especiais no HTML
   document.querySelectorAll('.perm-suporte').forEach(el => {
     el.style.display = (role === 'suporte') ? 'block' : 'none';
   });
@@ -188,7 +191,6 @@ function renderAdminProducts(products) {
     const itemCard = document.createElement('div');
     itemCard.className = 'admin-item-card';
 
-    // O botão de excluir só aparece para Dona e Suporte
     const deleteButtonHtml = (currentUserRole === 'dona' || currentUserRole === 'suporte') 
       ? `<button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>` 
       : '';
@@ -228,7 +230,7 @@ function prepareEditProduct(id) {
   document.getElementById('prod-desc').value = product.description;
   editIdInput.value = product.id;
 
-  imgInput.removeAttribute('required');
+  if (imgInput) imgInput.removeAttribute('required');
 
   if (formTitle) formTitle.textContent = 'Editar Sabor';
   if (btnSubmit) btnSubmit.textContent = 'Salvar Alterações';
@@ -245,14 +247,13 @@ function resetAdminForm() {
   if (!productForm) return;
   productForm.reset();
   editIdInput.value = '';
-  imgInput.setAttribute('required', 'true');
+  if (imgInput) imgInput.setAttribute('required', 'true');
   if (formTitle) formTitle.textContent = 'Cadastrar Novo Sabor';
   if (btnSubmit) btnSubmit.textContent = '+ Adicionar Sabor';
   if (btnCancelEdit) btnCancelEdit.classList.add('hidden');
 }
 
 async function deleteProduct(id) {
-  // Verificação no frontend
   if (currentUserRole !== 'dona' && currentUserRole !== 'suporte') {
     alert("Apenas a Dona ou o Suporte têm permissão para excluir produtos!");
     return;
@@ -276,7 +277,7 @@ if (productForm) {
     const category = document.getElementById('prod-category').value;
     const description = document.getElementById('prod-desc').value;
     const docIdToEdit = editIdInput.value;
-    const file = imgInput.files[0];
+    const file = imgInput ? imgInput.files[0] : null;
 
     const saveToFirestore = async (imageBase64) => {
       try {
