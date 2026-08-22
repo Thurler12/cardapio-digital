@@ -1,69 +1,81 @@
-
 /* ==========================================================================
-   1. VARIÁVEIS & RESET (Guia de Estilo + Base para Dark Mode)
+   1. VARIÁVEIS & TEMA DE CORES (GELATERIA PREMIUM)
    ========================================================================== */
 :root {
-  /* Cores Padrão (Tema Claro) */
-  --bg-primary: #f8f9fa;
+  /* Paleta Doce/Pastel - Modo Claro */
+  --bg-primary: #fcf8f6;
   --bg-card: #ffffff;
-  --text-main: #212529;
-  --text-muted: #6c757d;
-  --primary-color: #2b2d42;
-  --accent-color: #007bff;
-  --border-color: #e9ecef;
-
-  /* Regra do Sistema de 8 Pontos (8pt Grid) */
-  --space-8: 0.5rem;   /* 8px */
-  --space-16: 1rem;    /* 16px */
-  --space-24: 1.5rem;  /* 24px */
-  --space-32: 2rem;    /* 32px */
-
-  /* Tipografia Relativa (rem) */
-  --font-sm: 0.875rem; /* 14px */
-  --font-md: 1rem;     /* 16px */
-  --font-lg: 1.25rem;  /* 20px */
-  --font-xl: 1.5rem;   /* 24px */
+  --bg-header: rgba(255, 255, 255, 0.85);
+  --text-main: #2d2424;
+  --text-muted: #7a6e6e;
+  --border-color: #f0e4e1;
+  --accent-color: #ff6b8b; /* Rosa pastel vibrante */
+  --accent-hover: #e05370;
   
-  --radius: 12px;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  /* Badges de Categorias */
+  --badge-tradicional: #fff0f3;
+  --badge-tradicional-text: #c9184a;
+  --badge-lactose: #e8f8f5;
+  --badge-lactose-text: #11999e;
+  --badge-acucar: #fef9e7;
+  --badge-acucar-text: #d4ac0d;
+  --badge-vegano: #eafaf1;
+  --badge-vegano-text: #27ae60;
+
+  /* Espaçamento & Estrutura */
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-soft: 0 10px 30px rgba(220, 150, 160, 0.12);
+  --shadow-hover: 0 15px 35px rgba(220, 150, 160, 0.22);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Reset Básico */
+/* Modo Escuro (Mantém a elegância e contraste) */
+[data-theme="dark"] {
+  --bg-primary: #181214;
+  --bg-card: #241c1e;
+  --bg-header: rgba(36, 28, 30, 0.85);
+  --text-main: #f5ebeb;
+  --text-muted: #b5a5a7;
+  --border-color: #382b2e;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* Base Reset */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-main);
-  line-height: 1.5;
-  padding-bottom: var(--space-32);
+  line-height: 1.6;
+  transition: var(--transition);
+  padding-bottom: 40px;
 }
 
-/* Layout Container */
 .container {
-  width: 100%;
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding-left: var(--space-16);
-  padding-right: var(--space-16);
+  padding: 0 20px;
 }
 
 /* ==========================================================================
    2. CABEÇALHO (HEADER)
    ========================================================================== */
 .app-header {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  padding-top: var(--space-16);
-  padding-bottom: var(--space-16);
-  margin-bottom: var(--space-24);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
+  background-color: var(--bg-header);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 0;
 }
 
 .header-content {
@@ -73,80 +85,329 @@ body {
 }
 
 .brand-title {
-  font-size: var(--font-xl);
-  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff6b8b, #ff8e53);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .btn-theme {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  font-size: var(--font-lg);
-  padding: var(--space-8);
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  font-size: 1.1rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.btn-theme:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
 }
 
 /* ==========================================================================
-   3. SEÇÃO DE PRODUTOS & CARDS (MOBILE-FIRST)
+   3. FILTROS POR CATEGORIA
    ========================================================================== */
-.section-title {
-  font-size: var(--font-lg);
-  margin-bottom: var(--space-16);
+.menu-section {
+  padding-top: 32px;
 }
 
-/* Uso do GAP para afastar cards */
-.products-grid {
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.category-filters {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-16); /* 16px de afastamento */
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 28px;
+  scrollbar-width: none; /* Esconde scrollbar no Firefox */
+}
+
+.category-filters::-webkit-scrollbar {
+  display: none; /* Esconde scrollbar no Chrome/Safari */
+}
+
+.filter-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.filter-btn:hover, .filter-btn.active {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 107, 139, 0.3);
+}
+
+/* ==========================================================================
+   4. VITRINE DE PRODUTOS (CARDS DE SORVETE)
+   ========================================================================== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 28px;
 }
 
 .product-card {
   background-color: var(--bg-card);
-  border-radius: var(--radius);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  transition: var(--transition);
   display: flex;
   flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(255, 107, 139, 0.3);
 }
 
 .product-image {
   width: 100%;
-  height: 180px;
+  height: 220px;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
 }
 
 .product-info {
-  padding: var(--space-16); /* Padding de 16px */
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);      /* 8px entre os elementos de texto */
+  flex-grow: 1;
+}
+
+.badge-category {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--accent-color);
+  color: white;
 }
 
 .product-name {
-  font-size: var(--font-lg);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .product-description {
-  font-size: var(--font-sm);
+  font-size: 0.9rem;
   color: var(--text-muted);
-}
-
-.product-price {
-  font-size: var(--font-md);
-  font-weight: bold;
-  color: var(--accent-color);
-  margin-top: var(--space-8);
+  line-height: 1.5;
 }
 
 /* ==========================================================================
-   4. RESPONSIVIDADE (DESKTOP / TABLET)
+   5. TELA DE LOGIN & ADMIN FORMULÁRIOS
    ========================================================================== */
-@media (min-width: 600px) {
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-24); /* 24px em telas maiores */
-  }
+.login-container, .admin-container {
+  padding-top: 40px;
+}
+
+.login-card, .admin-section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-soft);
+}
+
+.login-card {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.admin-form, .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-group input, .form-group select {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.15);
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(255, 107, 139, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.btn-link {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* LISTA DE PRODUTOS NO ADMIN */
+.admin-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+  margin-top: 12px;
+  gap: 16px;
+}
+
+.admin-item-img {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.btn-delete {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-delete:hover {
+  opacity: 0.85;
+}
+
+.hidden {
+  display: none;
+}
+/* ==========================================================================
+   MELHORIAS NA TELA DE LOGIN
+   ========================================================================== */
+.login-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.login-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  background: var(--bg-primary);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.login-error {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background-color: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
 }

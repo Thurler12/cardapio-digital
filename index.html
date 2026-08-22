@@ -3,73 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cardápio de Sabores</title>
-  
+  <title>Sorveteria - Cardápio de Sabores</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- CABEÇALHO -->
   <header class="app-header">
     <div class="container header-content">
-      <h1 class="brand-title">Cardápio de Sabores</h1>
-      <button id="theme-toggle" class="btn-theme" aria-label="Alternar Tema">
-        🌙
-      </button>
+      <h1 class="brand-title">Gelateria & Sabores 🍦</h1>
+      <div class="header-actions">
+        <!-- Ícone do Gerente (Login) -->
+        <a href="login.html" class="btn-theme" aria-label="Área do Gerente" title="Área Administrativa">
+          🔑
+        </a>
+        <!-- Botão Alternar Tema -->
+        <button id="theme-toggle" class="btn-theme" aria-label="Alternar Tema">
+          🌙
+        </button>
+      </div>
     </div>
   </header>
 
+  <!-- CONTEÚDO PRINCIPAL DA VITRINE -->
   <main class="container">
     <section class="menu-section">
-      <h2 class="section-title">Sabores do dia</h2>
+      <h2 class="section-title">Nossos Sabores</h2>
       
+      <!-- Filtros por Categoria -->
+      <div class="category-filters">
+        <button class="filter-btn active" data-category="todos">Todos</button>
+        <button class="filter-btn" data-category="Tradicionais">Tradicionais</button>
+        <button class="filter-btn" data-category="Sem Lactose">Sem Lactose</button>
+        <button class="filter-btn" data-category="Sem Açúcar">Sem Açúcar</button>
+        <button class="filter-btn" data-category="Vegano">Vegano</button>
+        <button class="filter-btn" data-category="Picolés">Picolés</button>
+      </div>
+
+      <!-- Grade onde o JavaScript renderiza os sorvetes -->
       <div class="products-grid">
-        
-        <article class="product-card">
-          <img 
-            src="https://via.placeholder.com/300x200" 
-            alt="Foto do produto" 
-            class="product-image"
-          >
-          <div class="product-info">
-            <h3 class="product-name">Camafeu</h3>
-            <p class="product-description">
-              Sorvete de nozes com doce de leite.
-            </p>
-          </div>
-        </article>
-
-        <article class="product-card">
-          <img 
-            src="https://via.placeholder.com/300x200" 
-            alt="Foto do produto" 
-            class="product-image"
-          >
-          <div class="product-info">
-            <h3 class="product-name">Chocolate Belga</h3>
-            <p class="product-description">
-              Sorvete de chocolate ao leite.
-            </p>
-          </div>
-        </article>
-
-          <article class="product-card">
-            <img 
-              src="https://via.placeholder.com/300x200" 
-              alt="Foto do produto" 
-              class="product-image"
-            >
-            <div class="product-info">
-              <h3 class="product-name">Ninho com Morango</h3>
-              <p class="product-description">
-                Sorvete de leite ninho com uma camada de chocolate branco e geleia de morango.
-              </p>
-            </div>
-          </article>       
-
+        <!-- Os cards dos sorvetes vão aparecer aqui via script.js -->
       </div>
     </section>
   </main>
 
+  <!-- SCRIPT JS -->
   <script src="script.js"></script>
 </body>
 </html>

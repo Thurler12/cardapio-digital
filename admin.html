@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Gerente - Gelateria</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- CABEÇALHO ADMIN -->
+  <header class="app-header">
+    <div class="container header-content">
+      <h1 class="brand-title">Painel do Gerente 🍦</h1>
+      <div class="header-actions">
+        <!-- Botão para visualizar a vitrine -->
+        <a href="index.html" class="btn-theme" title="Ver Vitrine Pública">👁️</a>
+        <!-- Botão Sair -->
+        <a href="index.html" class="btn-link" style="color: #ff4d4d;">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL ADMIN -->
+  <main class="container admin-container">
+    
+    <!-- Formulário de Cadastro -->
+    <section class="admin-section">
+  <h2 id="form-title" class="section-title">Cadastrar Novo Sabor</h2>
+  
+  <form id="product-form" class="admin-form">
+    <!-- Campo oculto para guardar o ID quando estiver editando -->
+    <input type="hidden" id="edit-id" value="">
+
+    <div class="form-group">
+      <label for="prod-name">Nome do Sabor</label>
+      <input type="text" id="prod-name" placeholder="Ex: Ninho com Nutella" required>
+    </div>
+
+    <div class="form-group">
+      <label for="prod-category">Categoria / Restrição</label>
+      <select id="prod-category" required>
+        <option value="Tradicionais">Tradicionais</option>
+        <option value="Sem Lactose">Sem Lactose</option>
+        <option value="Sem Açúcar">Sem Açúcar / Zero</option>
+        <option value="Vegano">Vegano</option>
+        <option value="Picolés">Picolés</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="prod-desc">Descrição / Ingredientes</label>
+      <input type="text" id="prod-desc" placeholder="Ex: Gelato de leite Ninho recheado com creme de Nutella" required>
+    </div>
+
+    <div class="form-group">
+      <label for="prod-img">Foto do Sabor <small style="color: var(--text-muted);">(Opcional ao editar)</small></label>
+      <input type="file" id="prod-img" accept="image/*">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button type="submit" id="btn-submit" class="btn-primary" style="flex: 1;">+ Adicionar Sabor</button>
+      <button type="button" id="btn-cancel-edit" class="btn-delete hidden" style="background-color: var(--text-muted);">Cancelar</button>
+    </div>
+  </form>
+</section>
+
+    <!-- Lista de Sabores Cadastrados -->
+    <section class="admin-section">
+      <h2 class="section-title">Sabores no Cardápio</h2>
+      <div id="admin-product-list">
+        <!-- Os sabores cadastrados serão renderizados aqui pelo script.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
