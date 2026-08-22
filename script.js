@@ -80,17 +80,15 @@ function aplicarPermissoesUI(role, nome) {
   });
 }
 
-// ==========================================================================
+//================================================================
 // 2. FUNÇÃO DE LOGIN DIRETA
 // ==========================================================================
 async function realizarLogin() {
   const userInput = document.getElementById('admin-user');
   const passInput = document.getElementById('admin-pass');
 
-  if (!userInput || !passInput) {
-    alert("Erro: Campos de login não encontrados no HTML!");
-    return;
-  }
+  // Se os campos não existem (ex: estamos no index.html), encerra sem dar erro
+  if (!userInput || !passInput) return;
 
   const email = userInput.value.trim();
   const password = passInput.value.trim();
@@ -101,7 +99,6 @@ async function realizarLogin() {
   }
 
   try {
-    alert("Enviando dados para o Firebase...");
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     alert("Login realizado com sucesso!");
   } catch (error) {
