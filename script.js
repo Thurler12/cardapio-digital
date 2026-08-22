@@ -81,12 +81,19 @@ function aplicarPermissoesUI(role, nome) {
 }
 
 // Login
+// Login
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById('admin-user').value;
-    const password = document.getElementById('admin-pass').value;
+    const userInput = document.getElementById('admin-user');
+    const passInput = document.getElementById('admin-pass');
+
+    // Só tenta ler os valores se os elementos existirem na tela
+    if (!userInput || !passInput) return;
+
+    const email = userInput.value;
+    const password = passInput.value;
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
