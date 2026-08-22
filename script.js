@@ -201,10 +201,6 @@ function renderAdminProducts(products) {
     const itemCard = document.createElement('div');
     itemCard.className = `admin-item-card ${product.available === false ? 'disabled-item' : ''}`;
 
-    const deleteButtonHtml = (currentUserRole === 'dona' || currentUserRole === 'suporte') 
-      ? `<button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>` 
-      : '';
-
     const isChecked = product.available !== false ? 'checked' : '';
 
     itemCard.innerHTML = `
@@ -215,19 +211,63 @@ function renderAdminProducts(products) {
           <p style="font-size: var(--font-sm); color: var(--text-muted);">${product.description}</p>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
         <!-- Switch Ligar/Desligar -->
         <label class="switch-container" title="Ativar/Desativar no Cardápio">
           <input type="checkbox" class="toggle-status" data-id="${product.id}" ${isChecked}>
           <span class="slider round"></span>
         </label>
+        
+        <!-- Botão Editar -->
         <button class="filter-btn btn-edit-action" data-id="${product.id}">✏️ Editar</button>
-        ${deleteButtonHtml}
+        
+        <!-- Botão Excluir -->
+        <button class="btn-delete-action" data-id="${product.id}" title="Excluir Sabor">🗑️</button>
       </div>
     `;
 
     adminProductList.appendChild(itemCard);
   });
+
+  // Evento dos Switches
+  document.querySelectorAll('.toggle-status').forEach(toggle => {
+    toggle.addEventListener('change', async (e) => {
+      const prodId = e.target.dataset.id;
+      const isAvailable = e.target.checked;
+      try {
+        await updateDoc(doc(db, "produtos", prodId), { available: isAvailable });
+      } catch (err) {
+        console.error("Erro ao alterar disponibilidade:", err);
+        e.target.checked = !isAvailable;
+      }
+    });
+  });
+
+  // Evento de Edição
+  document.querySelectorAll('.btn-edit-action').forEach(btn => {
+    btn.addEventListener('click', () => prepareEditProduct(btn.dataset.id));
+  });
+
+  // Evento de Exclusão
+  document.querySelectorAll('.btn-delete-action').forEach(btn => {
+    btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
+  });
+}
+
+// Função para deletar o produto diretamente no Firestore
+async function deleteProduct(id) {
+  const product = globalProducts.find(p => p.id === id);
+  const productName = product ? product.name : 'este item';
+
+  if (confirm(`Tem certeza de que deseja apagar "${productName}" permanentemente?`)) {
+    try {
+      await deleteDoc(doc(db, "produtos", id));
+    } catch (error) {
+      console.error("Erro ao apagar produto:", error);
+      alert("Ocorreu um erro ao tentar excluir o item.");
+    }
+  }
+}
 
   // Ações dos switches
   document.querySelectorAll('.toggle-status').forEach(toggle => {
