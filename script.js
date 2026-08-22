@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-  getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot 
+  getFirestore, doc, getDoc, collection, addDoc, deleteDoc, updateDoc, onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -26,7 +26,7 @@ const adminPanel = document.getElementById('admin-panel');
 const btnLogout = document.getElementById('btn-logout');
 
 // ==========================================================================
-// 1. SESSÃO E ROLES
+// 1. SESSÃO E PERMISSÕES (ROLES)
 // ==========================================================================
 onAuthStateChanged(auth, async (user) => {
   const path = window.location.pathname;
@@ -115,7 +115,7 @@ function aplicarPermissoesUI(role, nome) {
 onSnapshot(productsRef, (snapshot) => {
   globalProducts = snapshot.docs.map(docSnap => ({
     id: docSnap.id,
-    available: true, // valor padrão caso o item seja antigo
+    available: true,
     ...docSnap.data()
   }));
 
@@ -124,10 +124,12 @@ onSnapshot(productsRef, (snapshot) => {
 
   renderPublicProducts(globalProducts, activeCategory);
   renderAdminProducts(globalProducts);
+}, (error) => {
+  console.error("Erro no listener em tempo real:", error);
 });
 
 // ==========================================================================
-// 4. VITRINE PÚBLICA (Filtra por Ativos/Ligados)
+// 4. VITRINE PÚBLICA (Filtra por Ativos)
 // ==========================================================================
 const productContainer = document.getElementById('product-list');
 const categoryButtons = document.querySelectorAll('.filter-btn');
@@ -137,7 +139,6 @@ function renderPublicProducts(products, category = 'Todos') {
 
   productContainer.innerHTML = '';
 
-  // Filtra apenas os itens LIGADOS (available === true)
   let visibleProducts = products.filter(p => p.available !== false);
 
   if (category !== 'Todos') {
@@ -177,7 +178,7 @@ if (categoryButtons) {
 }
 
 // ==========================================================================
-// 5. PAINEL ADMIN (Com Switch Ligar/Desligar)
+// 5. PAINEL ADMIN (Com Switch Ligar/Desligar e Botão Apagar)
 // ==========================================================================
 const productForm = document.getElementById('product-form');
 const adminProductList = document.getElementById('admin-product-list');
@@ -212,16 +213,12 @@ function renderAdminProducts(products) {
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
-        <!-- Switch Ligar/Desligar -->
         <label class="switch-container" title="Ativar/Desativar no Cardápio">
           <input type="checkbox" class="toggle-status" data-id="${product.id}" ${isChecked}>
           <span class="slider round"></span>
         </label>
         
-        <!-- Botão Editar -->
         <button class="filter-btn btn-edit-action" data-id="${product.id}">✏️ Editar</button>
-        
-        <!-- Botão Excluir -->
         <button class="btn-delete-action" data-id="${product.id}" title="Excluir Sabor">🗑️</button>
       </div>
     `;
@@ -229,47 +226,6 @@ function renderAdminProducts(products) {
     adminProductList.appendChild(itemCard);
   });
 
-  // Evento dos Switches
-  document.querySelectorAll('.toggle-status').forEach(toggle => {
-    toggle.addEventListener('change', async (e) => {
-      const prodId = e.target.dataset.id;
-      const isAvailable = e.target.checked;
-      try {
-        await updateDoc(doc(db, "produtos", prodId), { available: isAvailable });
-      } catch (err) {
-        console.error("Erro ao alterar disponibilidade:", err);
-        e.target.checked = !isAvailable;
-      }
-    });
-  });
-
-  // Evento de Edição
-  document.querySelectorAll('.btn-edit-action').forEach(btn => {
-    btn.addEventListener('click', () => prepareEditProduct(btn.dataset.id));
-  });
-
-  // Evento de Exclusão
-  document.querySelectorAll('.btn-delete-action').forEach(btn => {
-    btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
-  });
-}
-
-// Função para deletar o produto diretamente no Firestore
-async function deleteProduct(id) {
-  const product = globalProducts.find(p => p.id === id);
-  const productName = product ? product.name : 'este item';
-
-  if (confirm(`Tem certeza de que deseja apagar "${productName}" permanentemente?`)) {
-    try {
-      await deleteDoc(doc(db, "produtos", id));
-    } catch (error) {
-      console.error("Erro ao apagar produto:", error);
-      alert("Ocorreu um erro ao tentar excluir o item.");
-    }
-  }
-}
-
-  // Ações dos switches
   document.querySelectorAll('.toggle-status').forEach(toggle => {
     toggle.addEventListener('change', async (e) => {
       const prodId = e.target.dataset.id;
@@ -290,7 +246,7 @@ async function deleteProduct(id) {
   document.querySelectorAll('.btn-delete-action').forEach(btn => {
     btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
   });
-
+}
 
 function prepareEditProduct(id) {
   const product = globalProducts.find(p => p.id === id);
@@ -323,16 +279,15 @@ function resetAdminForm() {
 }
 
 async function deleteProduct(id) {
-  if (currentUserRole !== 'dona' && currentUserRole !== 'suporte') {
-    alert("Apenas a Dona ou o Suporte têm permissão para excluir produtos!");
-    return;
-  }
+  const product = globalProducts.find(p => p.id === id);
+  const productName = product ? product.name : 'este item';
 
-  if (confirm("Tem certeza que deseja excluir este sabor?")) {
+  if (confirm(`Tem certeza de que deseja apagar "${productName}" permanentemente?`)) {
     try {
       await deleteDoc(doc(db, "produtos", id));
     } catch (error) {
-      console.error("Erro ao excluir:", error);
+      console.error("Erro ao apagar produto:", error);
+      alert("Ocorreu um erro ao tentar excluir o item.");
     }
   }
 }
@@ -361,7 +316,7 @@ if (productForm) {
             category,
             description,
             image: imageBase64 || '',
-            available: true, // Por padrão entra ativado
+            available: true,
             createdAt: new Date()
           });
         }
