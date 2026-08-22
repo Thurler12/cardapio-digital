@@ -1,86 +1,99 @@
 // ==========================================================================
-// 1. GERENCIAMENTO DE SABORES (LOCALSTORAGE)
+// CONFIGURAÇÃO DO FIREBASE
 // ==========================================================================
-function getProducts() {
-  const savedProducts = localStorage.getItem('icecream_flavors');
-  if (savedProducts) {
-    return JSON.parse(savedProducts);
-  } else {
-    const initialProducts = [
-      {
-        id: 1,
-        name: 'Pistache Cream',
-        category: 'Tradicionais',
-        description: 'Gelato artesanal preparado com pasta pura de pistache italiano.',
-        image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=60'
-      },
-      {
-        id: 2,
-        name: 'Morango Zero Lactose',
-        category: 'Sem Lactose',
-        description: 'Sorbet 100% fruta feito com morangos frescos, zero leite.',
-        image: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=500&auto=format&fit=crop&q=60'
-      }
-    ];
-    localStorage.setItem('icecream_flavors', JSON.stringify(initialProducts));
-    return initialProducts;
-  }
-}
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-function saveProducts(products) {
-  localStorage.setItem('icecream_flavors', JSON.stringify(products));
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyCmMvpuCwr0xIPMtqxYeFtoqkulPzGy6Ok",
+  authDomain: "projeto-cardapio-thurler12.firebaseapp.com",
+  projectId: "projeto-cardapio-thurler12",
+  storageBucket: "projeto-cardapio-thurler12.firebasestorage.app",
+  messagingSenderId: "536350657388",
+  appId: "1:536350657388:web:8042646fe3e018aca48149",
+  measurementId: "G-RYC0VQ2ZL2"
+};
+
+// Inicializa o Firebase e o Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const productsRef = collection(db, "produtos");
+
+let globalProducts = [];
 
 // ==========================================================================
-// 2. RENDERIZAÇÃO E FILTRO NA VITRINE (INDEX.HTML)
+// 1. SINCRONIZAÇÃO EM TEMPO REAL (LISTENERS)
 // ==========================================================================
-const productsGrid = document.querySelector('.products-grid');
-const filterBtns = document.querySelectorAll('.filter-btn');
+onSnapshot(productsRef, (snapshot) => {
+  globalProducts = snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  }));
 
-function renderPublicProducts(categoryFilter = 'todos') {
-  if (!productsGrid) return;
+  // Atualiza as telas se estiverem visíveis
+  renderPublicProducts(globalProducts);
+  renderAdminProducts(globalProducts);
+});
 
-  const products = getProducts();
-  productsGrid.innerHTML = '';
+// ==========================================================================
+// 2. EXIBIÇÃO NO CARDÁPIO PÚBLICO (INDEX.HTML)
+// ==========================================================================
+const productContainer = document.getElementById('product-list');
+const categoryButtons = document.querySelectorAll('.filter-btn');
 
-  const filteredProducts = categoryFilter === 'todos' 
-    ? products 
-    : products.filter(p => p.category === categoryFilter);
+function renderPublicProducts(products) {
+  if (!productContainer) return;
 
-  if (filteredProducts.length === 0) {
-    productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Nenhum sabor encontrado nesta categoria.</p>';
+  productContainer.innerHTML = '';
+
+  if (products.length === 0) {
+    productContainer.innerHTML = '<p class="empty-msg">Nenhum sabor cadastrado no momento.</p>';
     return;
   }
 
-  filteredProducts.forEach(product => {
-    const productCard = document.createElement('article');
-    productCard.className = 'product-card';
+  products.forEach(product => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
 
-    productCard.innerHTML = `
+    card.innerHTML = `
       <img src="${product.image}" alt="${product.name}" class="product-image">
       <div class="product-info">
-        <span class="badge-category">${product.category}</span>
-        <h3 class="product-name">${product.name}</h3>
-        <p class="product-description">${product.description}</p>
+        <span class="product-badge">${product.category}</span>
+        <h3 class="product-title">${product.name}</h3>
+        <p class="product-desc">${product.description}</p>
       </div>
     `;
 
-    productsGrid.appendChild(productCard);
+    productContainer.appendChild(card);
   });
 }
 
-// Configura os cliques nos botões de filtro
-filterBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    filterBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const selectedCategory = btn.getAttribute('data-category');
-    renderPublicProducts(selectedCategory);
+// Filtros por categoria
+categoryButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    categoryButtons.forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+
+    const category = button.dataset.category;
+    if (category === 'Todos') {
+      renderPublicProducts(globalProducts);
+    } else {
+      const filtered = globalProducts.filter(p => p.category === category);
+      renderPublicProducts(filtered);
+    }
   });
 });
 
 // ==========================================================================
-// 3. RENDERIZAÇÃO, CADASTRO E EDIÇÃO NO PAINEL (ADMIN.HTML)
+// 3. PAINEL ADMIN (ADMIN.HTML) - CADASTRAR, EDITAR E EXCLUIR
 // ==========================================================================
 const productForm = document.getElementById('product-form');
 const adminProductList = document.getElementById('admin-product-list');
@@ -90,10 +103,9 @@ const btnSubmit = document.getElementById('btn-submit');
 const btnCancelEdit = document.getElementById('btn-cancel-edit');
 const imgInput = document.getElementById('prod-img');
 
-function renderAdminProducts() {
+function renderAdminProducts(products) {
   if (!adminProductList) return;
 
-  const products = getProducts();
   adminProductList.innerHTML = '';
 
   if (products.length === 0) {
@@ -114,41 +126,44 @@ function renderAdminProducts() {
         </div>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="filter-btn" onclick="editProduct(${product.id})">✏️ Editar</button>
-        <button class="btn-delete" onclick="deleteProduct(${product.id})">Excluir</button>
+        <button class="filter-btn btn-edit-action" data-id="${product.id}">✏️ Editar</button>
+        <button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>
       </div>
     `;
 
     adminProductList.appendChild(itemCard);
   });
+
+  // Eventos nos botões de editar/excluir
+  document.querySelectorAll('.btn-edit-action').forEach(btn => {
+    btn.addEventListener('click', () => prepareEditProduct(btn.dataset.id));
+  });
+
+  document.querySelectorAll('.btn-delete-action').forEach(btn => {
+    btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
+  });
 }
 
-// Função para carregar os dados no formulário e preparar a edição
-function editProduct(id) {
-  const products = getProducts();
-  const product = products.find(p => p.id === id);
-
+// Prepara formulário para edição
+function prepareEditProduct(id) {
+  const product = globalProducts.find(p => p.id === id);
   if (!product) return;
 
-  // Preenche os campos com os dados atuais
   document.getElementById('prod-name').value = product.name;
   document.getElementById('prod-category').value = product.category;
   document.getElementById('prod-desc').value = product.description;
   editIdInput.value = product.id;
 
-  // A foto não é obrigatória na edição (para não perder a foto antiga caso o usuário não altere)
   imgInput.removeAttribute('required');
 
-  // Altera os títulos e exibe o botão de cancelar
-  formTitle.textContent = 'Editar Sabor';
-  btnSubmit.textContent = 'Salvar Alterações';
-  btnCancelEdit.classList.remove('hidden');
+  if (formTitle) formTitle.textContent = 'Editar Sabor';
+  if (btnSubmit) btnSubmit.textContent = 'Salvar Alterações';
+  if (btnCancelEdit) btnCancelEdit.classList.remove('hidden');
 
-  // Rola suavemente até o formulário
   productForm.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Função para cancelar edição
+// Cancelar Edição
 if (btnCancelEdit) {
   btnCancelEdit.addEventListener('click', resetAdminForm);
 }
@@ -158,86 +173,66 @@ function resetAdminForm() {
   productForm.reset();
   editIdInput.value = '';
   imgInput.setAttribute('required', 'true');
-  formTitle.textContent = 'Cadastrar Novo Sabor';
-  btnSubmit.textContent = '+ Adicionar Sabor';
-  btnCancelEdit.classList.add('hidden');
+  if (formTitle) formTitle.textContent = 'Cadastrar Novo Sabor';
+  if (btnSubmit) btnSubmit.textContent = '+ Adicionar Sabor';
+  if (btnCancelEdit) btnCancelEdit.classList.add('hidden');
 }
 
-// Submissão do formulário (Criar ou Editar)
+// Excluir Produto no Firestore
+async function deleteProduct(id) {
+  if (confirm("Tem certeza que deseja excluir este sabor?")) {
+    try {
+      await deleteDoc(doc(db, "produtos", id));
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      alert("Erro ao excluir sabor do banco de dados.");
+    }
+  }
+}
+
+// Enviar Formulário (Criar ou Atualizar no Firebase)
 if (productForm) {
-  productForm.addEventListener('submit', function (event) {
+  productForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const name = document.getElementById('prod-name').value;
     const category = document.getElementById('prod-category').value;
     const description = document.getElementById('prod-desc').value;
-    const isEditing = editIdInput.value !== '';
+    const docIdToEdit = editIdInput.value;
     const file = imgInput.files[0];
 
-    let products = getProducts();
+    const saveToFirestore = async (imageBase64) => {
+      try {
+        if (docIdToEdit) {
+          // Atualiza existente
+          const docRef = doc(db, "produtos", docIdToEdit);
+          const updateData = { name, category, description };
+          if (imageBase64) updateData.image = imageBase64;
 
-    // Função interna para finalizar e salvar
-    const finalizeSave = (imageBase64) => {
-      if (isEditing) {
-        const idToEdit = Number(editIdInput.value);
-        products = products.map(p => {
-          if (p.id === idToEdit) {
-            return {
-              ...p,
-              name,
-              category,
-              description,
-              image: imageBase64 || p.image // Mantém a foto antiga se nenhuma nova for enviada
-            };
-          }
-          return p;
-        });
-      } else {
-        const newProduct = {
-          id: Date.now(),
-          name,
-          category,
-          description,
-          image: imageBase64
-        };
-        products.push(newProduct);
+          await updateDoc(docRef, updateData);
+        } else {
+          // Cria novo
+          await addDoc(productsRef, {
+            name,
+            category,
+            description,
+            image: imageBase64 || '',
+            createdAt: new Date()
+          });
+        }
+        resetAdminForm();
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        alert("Erro ao salvar sabor no banco de dados.");
       }
-
-      saveProducts(products);
-      resetAdminForm();
-      renderAdminProducts();
     };
 
-    // Processamento de imagem se houver novo arquivo
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => finalizeSave(e.target.result);
+      reader.onload = (e) => saveToFirestore(e.target.result);
       reader.readAsDataURL(file);
     } else {
-      finalizeSave(null);
+      saveToFirestore(null);
     }
   });
 }
-
-// ==========================================================================
-// 4. AUTENTICAÇÃO E INITIALIZAÇÃO
-// ==========================================================================
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
-  loginForm.addEventListener('submit', function (event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    if (email === 'alex.retamales.ar@gmail.com' && password === '123456') {
-      window.location.href = 'admin.html';
-    } else {
-      document.getElementById('login-error')?.classList.remove('hidden');
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  renderPublicProducts();
-  renderAdminProducts();
-});
