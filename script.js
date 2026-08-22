@@ -1,5 +1,5 @@
 // ==========================================================================
-// CONFIGURAÇÃO DO FIREBASE
+// CONFIGURAÇÃO DO FIREBASE E SERVIÇOS
 // ==========================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
@@ -8,9 +8,16 @@ import {
   onSnapshot, 
   addDoc, 
   doc, 
+  getDoc,
   updateDoc, 
   deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCmMvpuCwr0xIPMtqxYeFtoqkulPzGy6Ok",
@@ -22,15 +29,100 @@ const firebaseConfig = {
   measurementId: "G-RYC0VQ2ZL2"
 };
 
-// Inicializa o Firebase e o Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 const productsRef = collection(db, "produtos");
 
 let globalProducts = [];
+let currentUserRole = null;
 
 // ==========================================================================
-// 1. SINCRONIZAÇÃO EM TEMPO REAL (LISTENERS)
+// 1. GERENCIAMENTO DE SESSÃO E ROLES
+// ==========================================================================
+const loginContainer = document.getElementById('login-container');
+const adminPanel = document.getElementById('admin-panel');
+const loginForm = document.getElementById('login-form');
+const btnLogout = document.getElementById('btn-logout');
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // Buscar perfil do usuário no Firestore
+    try {
+      const userDocRef = doc(db, "usuarios", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        currentUserRole = userData.role;
+        aplicarPermissoesUI(currentUserRole, userData.nome);
+      } else {
+        // Papel padrão caso não exista documento
+        currentUserRole = 'gerente';
+        aplicarPermissoesUI('gerente', 'Usuário');
+      }
+    } catch (err) {
+      console.error("Erro ao carregar permissões:", err);
+      currentUserRole = 'gerente';
+    }
+
+    if (loginContainer) loginContainer.classList.add('hidden');
+    if (adminPanel) adminPanel.classList.remove('hidden');
+  } else {
+    currentUserRole = null;
+    if (loginContainer) loginContainer.classList.remove('hidden');
+    if (adminPanel) adminPanel.classList.add('hidden');
+  }
+});
+
+// Exibe/Oculta elementos com base nas classes de permissão
+function aplicarPermissoesUI(role, nome) {
+  const userInfoTag = document.getElementById('user-info-tag');
+  if (userInfoTag) {
+    userInfoTag.textContent = `${nome} (${role.toUpperCase()})`;
+  }
+
+  // Oculta/Exibe botões ou áreas com classes especiais no HTML
+  document.querySelectorAll('.perm-suporte').forEach(el => {
+    el.style.display = (role === 'suporte') ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.perm-dona').forEach(el => {
+    el.style.display = (role === 'suporte' || role === 'dona') ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.perm-gerente').forEach(el => {
+    el.style.display = (role === 'suporte' || role === 'dona' || role === 'gerente') ? 'block' : 'none';
+  });
+}
+
+// Login
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('admin-user').value;
+    const password = document.getElementById('admin-pass').value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      loginForm.reset();
+    } catch (error) {
+      console.error("Erro no login:", error);
+      alert('E-mail ou senha incorretos!');
+    }
+  });
+}
+
+// Logout
+if (btnLogout) {
+  btnLogout.addEventListener('click', () => {
+    signOut(auth);
+  });
+}
+
+// ==========================================================================
+// 2. SINCRONIZAÇÃO EM TEMPO REAL
 // ==========================================================================
 onSnapshot(productsRef, (snapshot) => {
   globalProducts = snapshot.docs.map(docSnap => ({
@@ -38,13 +130,12 @@ onSnapshot(productsRef, (snapshot) => {
     ...docSnap.data()
   }));
 
-  // Atualiza as telas se estiverem visíveis
   renderPublicProducts(globalProducts);
   renderAdminProducts(globalProducts);
 });
 
 // ==========================================================================
-// 2. EXIBIÇÃO NO CARDÁPIO PÚBLICO (INDEX.HTML)
+// 3. EXIBIÇÃO NO CARDÁPIO PÚBLICO
 // ==========================================================================
 const productContainer = document.getElementById('product-list');
 const categoryButtons = document.querySelectorAll('.filter-btn');
@@ -76,7 +167,6 @@ function renderPublicProducts(products) {
   });
 }
 
-// Filtros por categoria
 categoryButtons.forEach(button => {
   button.addEventListener('click', () => {
     categoryButtons.forEach(btn => btn.classList.remove('active'));
@@ -93,7 +183,7 @@ categoryButtons.forEach(button => {
 });
 
 // ==========================================================================
-// 3. PAINEL ADMIN (ADMIN.HTML) - CADASTRAR, EDITAR E EXCLUIR
+// 4. PAINEL ADMIN (ADMIN.HTML)
 // ==========================================================================
 const productForm = document.getElementById('product-form');
 const adminProductList = document.getElementById('admin-product-list');
@@ -117,6 +207,11 @@ function renderAdminProducts(products) {
     const itemCard = document.createElement('div');
     itemCard.className = 'admin-item-card';
 
+    // O botão de excluir só aparece para Dona e Suporte
+    const deleteButtonHtml = (currentUserRole === 'dona' || currentUserRole === 'suporte') 
+      ? `<button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>` 
+      : '';
+
     itemCard.innerHTML = `
       <div class="admin-item-info">
         <img src="${product.image}" alt="${product.name}" class="admin-item-img">
@@ -127,14 +222,13 @@ function renderAdminProducts(products) {
       </div>
       <div style="display: flex; gap: 8px;">
         <button class="filter-btn btn-edit-action" data-id="${product.id}">✏️ Editar</button>
-        <button class="btn-delete btn-delete-action" data-id="${product.id}">Excluir</button>
+        ${deleteButtonHtml}
       </div>
     `;
 
     adminProductList.appendChild(itemCard);
   });
 
-  // Eventos nos botões de editar/excluir
   document.querySelectorAll('.btn-edit-action').forEach(btn => {
     btn.addEventListener('click', () => prepareEditProduct(btn.dataset.id));
   });
@@ -144,7 +238,6 @@ function renderAdminProducts(products) {
   });
 }
 
-// Prepara formulário para edição
 function prepareEditProduct(id) {
   const product = globalProducts.find(p => p.id === id);
   if (!product) return;
@@ -163,7 +256,6 @@ function prepareEditProduct(id) {
   productForm.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Cancelar Edição
 if (btnCancelEdit) {
   btnCancelEdit.addEventListener('click', resetAdminForm);
 }
@@ -178,8 +270,13 @@ function resetAdminForm() {
   if (btnCancelEdit) btnCancelEdit.classList.add('hidden');
 }
 
-// Excluir Produto no Firestore
 async function deleteProduct(id) {
+  // Verificação no frontend
+  if (currentUserRole !== 'dona' && currentUserRole !== 'suporte') {
+    alert("Apenas a Dona ou o Suporte têm permissão para excluir produtos!");
+    return;
+  }
+
   if (confirm("Tem certeza que deseja excluir este sabor?")) {
     try {
       await deleteDoc(doc(db, "produtos", id));
@@ -190,7 +287,6 @@ async function deleteProduct(id) {
   }
 }
 
-// Enviar Formulário (Criar ou Atualizar no Firebase)
 if (productForm) {
   productForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -204,14 +300,12 @@ if (productForm) {
     const saveToFirestore = async (imageBase64) => {
       try {
         if (docIdToEdit) {
-          // Atualiza existente
           const docRef = doc(db, "produtos", docIdToEdit);
           const updateData = { name, category, description };
           if (imageBase64) updateData.image = imageBase64;
 
           await updateDoc(docRef, updateData);
         } else {
-          // Cria novo
           await addDoc(productsRef, {
             name,
             category,
