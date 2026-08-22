@@ -289,13 +289,15 @@ body {
   background-color: var(--accent-color);
   color: #ffffff;
   border: none;
-  padding: 14px;
+  padding: 12px 24px; /* Diminuiu um pouco a altura interna */
   border-radius: var(--radius-md);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   box-shadow: 0 4px 12px rgba(255, 107, 139, 0.3);
+  align-self: flex-start; /* Faz o botão encolher e ocupar apenas o espaço do texto */
+  width: auto; /* Garante que ele não estique 100% */
 }
 
 .btn-primary:hover {
